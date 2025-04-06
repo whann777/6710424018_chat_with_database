@@ -56,31 +56,28 @@ if user_input := st.chat_input("Type your message here..."):
     st.chat_message("user").markdown(user_input)
 
     # Determine if user input is a request for data analysis and the checkbox is selected
-    if model:
-        try:
-            if st.session_state.uploaded_data is not None and analyze_data_checkbox:
-                # Check if user requested data analysis or insights
-                if "analyze" in user_input.lower() or "insight" in user_input.lower():
-                    # Create a description of the data for the AI model
-                    data_description = st.session_state.uploaded_data.describe().to_string()
-                    prompt = f"Analyze the following dataset and provide insights:\n\n{data_description}"
+    try:
+        if st.session_state.uploaded_data is not None and analyze_data_checkbox:
+            # Check if user requested data analysis or insights
+            if "analyze" in user_input.lower() or "insight" in user_input.lower():
+                # Create a description of the data for the AI model
+                data_description = st.session_state.uploaded_data.describe().to_string()
+                prompt = f"Analyze the following dataset and provide insights:\n\n{data_description}"
 
-                    # Generate AI response for the data analysis
-                    response = model.generate_content(prompt)
-                    bot_response = response.text
+                # Generate AI response for the data analysis
+                response = model.generate_content(prompt)
+                bot_response = response.text
 
-                    # Store and display the AI-generated analysis
-                    st.session_state.chat_history.append(("assistant", bot_response))
-                    st.chat_message("assistant").markdown(bot_response)
-                else:
-                    # Normal conversation with the bot
-                    response = model.generate_content(user_input)
-                    bot_response = response.text
+                # Store and display the AI-generated analysis
+                st.session_state.chat_history.append(("assistant", bot_response))
+                st.chat_message("assistant").markdown(bot_response)
+            else:
+                # Normal conversation with the bot
+                response = model.generate_content(user_input)
+                bot_response = response.text
 
-                    # Store and display the bot response
-                    st.session_state.chat_history.append(("assistant", bot_response))
-                    st.chat_message("assistant").markdown(bot_response)
-        except Exception as e:
+                # Store and display the bot response
+                st.session_state.chat_history.append(("assistant", bot_response))
+                st.chat_message("assistant").markdown(bot_response)
+       except Exception as e:
             st.error(f"An error occurred while generating the response: {e}")
-      else:
-         st.warning("Please configure the Gemini API Key to enable chat responses.")
