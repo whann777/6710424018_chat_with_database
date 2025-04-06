@@ -7,7 +7,7 @@ st.title("🧠 My Chatbot and Data Analysis App")
 st.subheader("Conversation and Data Analysis")
 
 # Capture Gemini API Key
-gemini_api_key = st.text_input("Gemini API Key: ", placeholder="Type your API Key here...", type="password")
+gemini_api_key = st.secret('gemini_api_key')
 
 # Initialize the Gemini Model
 model = None
