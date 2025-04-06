@@ -50,7 +50,7 @@ if uploaded_files:
             df = pd.read_csv(file)
             st.session_state.uploaded_data_list.append((file.name, df))
             st.success(f"{file.name} successfully uploaded and read.")
-            st.write(f"### Preview of {file.name}")
+            st.write(f"### Preview of `{file.name}`")
             st.dataframe(df.head())
         except Exception as e:
             st.error(f"Error reading {file.name}: {e}")
@@ -106,9 +106,7 @@ Here's the context:
 """
 
                     response = model.generate_content(code_prompt)
-                    code_generated = response.text.replace("
-python", "").replace("
-", "")
+                    code_generated = response.text.replace("```python", "").replace("```", "")
 
                     try:
                         # 👨‍💻 Run the generated code
@@ -147,4 +145,5 @@ Please summarize the result and provide your interpretation or insight.
             st.warning("Please provide a valid Gemini API Key to enable responses.")
     except Exception as e:
         st.error(f"An error occurred while generating the response: {e}")
+
 
