@@ -79,5 +79,5 @@ if user_input := st.chat_input("Type your message here..."):
                 # Store and display the bot response
                 st.session_state.chat_history.append(("assistant", bot_response))
                 st.chat_message("assistant").markdown(bot_response)
-       except Exception as e:
+    except Exception as e:
             st.error(f"An error occurred while generating the response: {e}")
