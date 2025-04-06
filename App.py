@@ -68,7 +68,6 @@ if user_input := st.chat_input("Type your question here..."):
         if model is not None:
             if analyze_data_checkbox and st.session_state.uploaded_data_list:
                 for filename, df in st.session_state.uploaded_data_list:
-                    # เตรียมข้อมูลสำหรับ prompt
                     df_name = "df"
                     locals()[df_name] = df
                     question = user_input
@@ -76,7 +75,7 @@ if user_input := st.chat_input("Type your question here..."):
                     example_record = df.head(2).to_dict(orient="records")
 
                     # ----------------------------------------
-                    # 🧠 Code1: ให้ Gemini สร้างโค้ด Python
+                    # 🧠 สร้างโค้ด Python จาก Gemini
                     # ----------------------------------------
                     code_prompt = f"""
 You are a helpful Python code generator.
@@ -108,13 +107,24 @@ Here's the context:
                     response = model.generate_content(code_prompt)
                     code_generated = response.text.replace("```python", "").replace("```", "")
 
+                    # 👨‍💻 แสดงโค้ดที่ Gemini สร้างมา
+                    st.code(code_generated, language="python")
+
+                    # ✅ ใช้ exec() แบบปลอดภัย
+                    query_result = None
                     try:
-                        # 👨‍💻 Run the generated code
                         exec(code_generated, globals(), locals())
-                        ANSWER = locals().get("query_result", "No result returned.")
+                        query_result = locals().get("query_result", None)
+                    except Exception as e:
+                        if "query_result" not in locals():
+                            st.error(f"❌ Error executing generated code: {e}")
+                            st.code(code_generated, language="python")
+
+                    if query_result is not None:
+                        ANSWER = query_result
 
                         # ----------------------------------------
-                        # 🧠 Code2: อธิบายผลลัพธ์แบบ Insight
+                        # 🧠 ให้ Gemini สรุปผลลัพธ์
                         # ----------------------------------------
                         explain_prompt = f'''
 The user asked: {question}
@@ -127,15 +137,10 @@ Please summarize the result and provide your interpretation or insight.
 
                         st.session_state.chat_history.append(("assistant", bot_response))
                         st.chat_message("assistant").markdown(bot_response)
-
-                    except Exception as e:
-                        st.error(f"❌ Error executing generated code: {e}")
-                        st.code(code_generated, language="python")
-
+                    else:
+                        st.warning("⚠️ Code executed, but no `query_result` was produced.")
             else:
-                # -------------------------------
-                # 💬 Normal Chat (not about data)
-                # -------------------------------
+                # 💬 Normal Chat
                 response = model.generate_content(user_input)
                 bot_response = response.text
                 st.session_state.chat_history.append(("assistant", bot_response))
