@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 import google.generativeai as genai
-import textwrap
-from IPython.display import Markdown
 
 # Set up the Streamlit app layout
 st.title("🧠 My Chatbot and Data Analysis App")
@@ -46,7 +44,7 @@ if uploaded_files:
         except Exception as e:
             st.error(f"Error reading {file.name}: {e}")
 
-# Checkbox
+# Checkbox: indicate if user wants AI analysis
 analyze_data_checkbox = st.checkbox("Analyze CSV Data with AI")
 
 # Chat input
@@ -59,12 +57,13 @@ if user_input := st.chat_input("Type your message here..."):
             if analyze_data_checkbox and st.session_state.uploaded_data_list:
                 for filename, df in st.session_state.uploaded_data_list:
                     df_name = "df"
-                    locals()[df_name] = df  # dynamically assign dataframe for exec()
+                    locals()[df_name] = df  # assign df for exec()
+
                     question = user_input
                     data_dict_text = df.dtypes.astype(str).to_dict()
                     example_record = df.head(2).to_dict(orient="records")
 
-                    # ----- Code1: Create prompt to generate Python code -----
+                    # -- Create prompt for Python code generation --
                     code_prompt = f"""
 You are a helpful Python code generator.
 Your goal is to write Python code snippets based on the user's question
@@ -102,7 +101,7 @@ Here's the context:
                         exec(code_generated, globals(), locals())
                         ANSWER = locals().get("query_result", "No result found.")
 
-                        # ----- Code2: Explain the result -----
+                        # -- Create prompt for explanation --
                         explain_prompt = f'''
 The user asked: {question}
 Here is the result: {ANSWER}
@@ -112,15 +111,16 @@ Please summarize the result and provide your interpretation of the customer's pe
                         explanation_response = model.generate_content(explain_prompt)
                         bot_response = explanation_response.text
 
-                        # Store and show
+                        # Show assistant reply
                         st.session_state.chat_history.append(("assistant", bot_response))
                         st.chat_message("assistant").markdown(bot_response)
 
                     except Exception as e:
                         st.error(f"❌ Error while executing code: {e}")
                         st.code(code_generated, language='python')
+
             else:
-                # Regular chat if not analyzing data
+                # Normal conversation
                 response = model.generate_content(user_input)
                 bot_response = response.text
                 st.session_state.chat_history.append(("assistant", bot_response))
@@ -129,3 +129,4 @@ Please summarize the result and provide your interpretation of the customer's pe
             st.warning("Please configure the Gemini API Key to enable chat responses.")
     except Exception as e:
         st.error(f"An error occurred while generating the response: {e}")
+
