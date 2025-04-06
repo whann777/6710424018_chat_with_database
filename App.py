@@ -145,5 +145,3 @@ Please summarize the result and provide your interpretation or insight.
             st.warning("Please provide a valid Gemini API Key to enable responses.")
     except Exception as e:
         st.error(f"An error occurred while generating the response: {e}")
-
-
