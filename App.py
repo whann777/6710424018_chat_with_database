@@ -74,44 +74,62 @@ if user_input := st.chat_input("Type your question here..."):
                     data_dict_text = df.dtypes.astype(str).to_dict()
                     example_record = df.head(2).to_dict(orient="records")
 
-                    # ----- Prompt for code generation -----
+                    # ----------------------------------------
+                    # 🧠 สร้างโค้ด Python จาก Gemini
+                    # ----------------------------------------
                     code_prompt = f"""
 You are a helpful Python code generator.
 Your goal is to write Python code snippets based on the user's question
 and the provided DataFrame information.
 
-Instructions:
-- Do not import pandas.
-- Use the exec() function.
-- Store the result in a variable named `query_result`.
-- Do not explain anything. Return only valid Python code.
+Here's the context:
 
-User Question: {question}
-DataFrame Name: {df_name}
-DataFrame Schema: {data_dict_text}
-Sample Data: {example_record}
+**User Question:**
+{question}
+
+**DataFrame Name:**
+{df_name}
+
+**DataFrame Details:**
+{data_dict_text}
+
+**Sample Data (Top 2 Rows):**
+{example_record}
+
+**Instructions:**
+1. Write Python code that addresses the user's question by querying or manipulating the DataFrame.
+2. Use the exec() function to execute the generated code.
+3. Do not import pandas.
+4. Change date column type to datetime if needed.
+5. Store the result in a variable named query_result.
 """
 
                     response = model.generate_content(code_prompt)
                     code_generated = response.text.replace("```python", "").replace("```", "")
 
-                    # ✅ Run exec() safely without showing code
+                    # 👨‍💻 แสดงโค้ดที่ Gemini สร้างมา
+                    st.code(code_generated, language="python")
+
+                    # ✅ ใช้ exec() แบบปลอดภัย
                     query_result = None
                     try:
                         exec(code_generated, globals(), locals())
                         query_result = locals().get("query_result", None)
                     except Exception as e:
                         if "query_result" not in locals():
-                            st.warning("⚠️ Unable to generate a valid answer from your data.")
+                            st.error(f"❌ Error executing generated code: {e}")
+                            st.code(code_generated, language="python")
 
                     if query_result is not None:
                         ANSWER = query_result
 
-                        # ----- Let Gemini explain the answer -----
+                        # ----------------------------------------
+                        # 🧠 ให้ Gemini สรุปผลลัพธ์
+                        # ----------------------------------------
                         explain_prompt = f'''
 The user asked: {question}
 Here is the result: {ANSWER}
-Please summarize the result and answer the question directly.
+Please summarize the result and provide your interpretation or insight.
 '''
 
                         explanation_response = model.generate_content(explain_prompt)
@@ -120,9 +138,9 @@ Please summarize the result and answer the question directly.
                         st.session_state.chat_history.append(("assistant", bot_response))
                         st.chat_message("assistant").markdown(bot_response)
                     else:
-                        st.warning("⚠️ Code executed, but no result was returned in `query_result`.")
+                        st.warning("⚠️ Code executed, but no `query_result` was produced.")
             else:
-                # 🔁 Normal conversation
+                # 💬 Normal Chat
                 response = model.generate_content(user_input)
                 bot_response = response.text
                 st.session_state.chat_history.append(("assistant", bot_response))
